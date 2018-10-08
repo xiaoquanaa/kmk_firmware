@@ -5,6 +5,7 @@ name = "pypi"
 
 [packages]
 pydux = "*"
+pyocd = "*"
 
 [dev-packages]
 adafruit-ampy = "*"

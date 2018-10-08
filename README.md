@@ -44,11 +44,11 @@ ecosystem:
 | [pyboard v1.1](https://www.adafruit.com/product/2390) | STM32F405RG (Cortex M4F) | MicroPython | Our reference board for basic USB keyboards |
 | [Adafruit Feather M4 Express](https://www.adafruit.com/product/3857) | Atmel SAMD52 (Cortex M4F) | CircuitPython | A more economical solution for basic USB keyboards |
 | [Adafruit ItsyBitsy M4 Express](https://www.adafruit.com/product/3800) | Atmel SAMD52 (Cortex M4F) | CircuitPython | An EVEN MORE economical solution for basic USB keyboards |
+| [MakerDiary nRF52840 Micro Dev Kit](https://www.seeedstudio.com/nRF52840-Micro-Development-Kit-p-3079.html) | nRF52840 | [CircuitPython](https://github.com/KMKfw/circuitpython/tree/topic-nrf52840-mdk) | This is basically as bleeding edge as it gets. Currently only supports USB HID like the other ports. Will support BLE HID to PC as well as BLE split boards |
 
 ### Support Planned/WIP
 | Board | Chipset | Python Platform | Notes |
 | ----- | ------- | --------------- | ----- |
-| [Seeed nRF52840 Micro Dev Kit](https://www.seeedstudio.com/nRF52840-Micro-Development-Kit-p-3079.html) | nRF52840 | [CircuitPython](https://github.com/KMKfw/circuitpython/tree/topic-nrf52840-mdk) | This is basically as bleeding edge as it gets. Will support BLE HID to PC as well as BLE split boards |
 | [Planck rev6 Keyboard](https://olkb.com/planck) | STM32 of some sort | MicroPython | Requires porting MicroPython to STM32F3, this work has begun but I'm pretty terrible at it. |
 | [Proton C Controller?](https://www.reddit.com/r/MechanicalKeyboards/comments/87cw36/render_of_the_qmk_proton_c_qmkpowered_pro_micro/) | ??? | ??? | Does not exist yet, the controller from a Planck rev6 in a Pro Micro pin-compat controller chip |
 
@@ -71,6 +71,13 @@ are currently not, due to some deficiency uncovered in development/testing:
 | [Adafruit Feather nRF52 BLE Controller](https://www.adafruit.com/product/3406) | nRF52832 | CircuitPython | Lack of USB HID (HW), but could be fixed with GPIO USB breakout. BLE HID could be possible, but it's considered somewhat unstable. This chip is considered "mostly unsupported" in CircuitPython according to Adafruit Discord, so I've mostly abandoned it for now. |
 | [Teensy 3.2 Controller](https://www.adafruit.com/product/2756) | | MicroPython | Lack of USB HID (SW - MP) |
 
+
+## Linux: Allow flashing devices as a user
+
+```sh
+sudo cp linux-udev/99-kmk-flash-as-user.rules /etc/udev/rules.d/
+sudo udevadm control --reload-rules && sudo udevadm trigger
+```
 
 ## License, Copyright, and Legal
 

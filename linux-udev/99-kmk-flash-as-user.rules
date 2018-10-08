@@ -1,0 +1,5 @@
+# STM32 Bootloader (pyboard)
+SUBSYSTEMS=="usb", ATTRS{idVendor}=="0483", ATTRS{idProduct}=="df11", GROUP="users", MODE="0660"
+
+# NXP ARM mbed (NRF5240 MDK)
+SUBSYSTEMS=="usb", ATTRS{idVendor}=="0d28", ATTRS{idProduct}=="0204", GROUP="users", MODE="0660"

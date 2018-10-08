@@ -131,6 +131,10 @@ circuitpy-build-nrf:
 	@echo "===> Building CircuitPython"
 	@pipenv run $(MAKE) -C build/circuitpython/ports/nrf BOARD=feather_nrf52832 SERIAL=${AMPY_PORT} SD=s132 FROZEN_MPY_DIR=freeze clean all
 
+circuitpy-build-nrf52840-mdk:
+	@echo "===> Building CircuitPython"
+	@pipenv run $(MAKE) -C build/circuitpython/ports/nrf BOARD=makerdiary_nrf52840_mdk FROZEN_MPY_DIRS="freeze" SD=s140 clean all
+
 circuitpy-flash-feather-m4-express:
 	@echo "Flashing not available for Feather M4 Express over bossa right now"
 	@echo "First, double tap the reset button on the Feather. You should see a red light near the USB port"
@@ -148,6 +152,10 @@ circuitpy-flash-itsybitsy-m4-express:
 circuitpy-flash-nrf: circuitpy-build-nrf
 	@echo "===> Flashing CircuitPython with KMK and your keymap"
 	@pipenv run $(MAKE) -C build/circuitpython/ports/nrf BOARD=feather_nrf52832 SERIAL=${AMPY_PORT} SD=s132 FROZEN_MPY_DIR=freeze dfu-gen dfu-flash
+
+circuitpy-flash-nrf52840-mdk:
+	@echo "===> Building CircuitPython"
+	@pipenv run $(MAKE) -C build/circuitpython/ports/nrf BOARD=makerdiary_nrf52840_mdk FROZEN_MPY_DIRS="freeze" SD=s140 FLASHER=pyocd flash
 
 micropython-build-pyboard:
 	@pipenv run $(MAKE) -j4 -C build/micropython/ports/stm32/ BOARD=PYBV11 FROZEN_MPY_DIR=freeze all
@@ -198,6 +206,29 @@ build-feather-nrf52832: lint devdeps circuitpy-deps circuitpy-freeze-kmk-nrf
 	@$(MAKE) circuitpy-build-nrf
 
 flash-feather-nrf52832: build-feather-nrf52832 circuitpy-flash-nrf circuitpy-flash-nrf-endpoint
+endif
+
+ifndef USER_KEYMAP
+build-nrf52840-mdk:
+	@echo "===> Must provide a USER_KEYMAP (usually from user_keymaps/...) to build!" && exit 1
+
+flash-nrf52840-mdk:
+	@echo "===> Must provide a USER_KEYMAP (usually from user_keymaps/...) to build!" && exit 1
+else
+ifndef SKIP_KEYMAP_VALIDATION
+build-nrf52840-mdk: lint devdeps circuitpy-deps circuitpy-freeze-kmk-nrf
+else
+build-nrf52840-mdk: lint devdeps circuitpy-deps circuitpy-freeze-kmk-nrf micropython-build-unix
+endif
+	@echo "===> Preparing keyboard script for bundling into CircuitPython"
+ifndef SKIP_KEYMAP_VALIDATION
+	@MICROPYPATH=./ ./bin/micropython.sh bin/keymap_sanity_check.py ${USER_KEYMAP}
+endif
+	@rsync -ah ${USER_KEYMAP} build/circuitpython/ports/nrf/freeze/kmk_keyboard_user.py
+	@rsync -ah kmk/entrypoints/global.py build/circuitpython/ports/nrf/freeze/_main.py
+	@$(MAKE) circuitpy-build-nrf52840-mdk
+
+flash-nrf52840-mdk: build-nrf52840-mdk circuitpy-flash-nrf52840-mdk
 endif
 
 ifndef USER_KEYMAP

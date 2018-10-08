@@ -1,21 +1,25 @@
 try:
     import board
+    import microcontroller
 
     PLATFORM = 'CircuitPython'
     PIN_SOURCE = board
+    PIN_FALLBACK_SOURCE = microcontroller.pin
 except ImportError:
     import machine
 
     PLATFORM = 'MicroPython'
     PIN_SOURCE = machine.Pin.board
+    PIN_FALLBACK_SOURCE = None
 except ImportError:
     from kmk.common.types import Passthrough
 
     PLATFORM = 'Unit Testing'
     PIN_SOURCE = Passthrough()
+    PIN_FALLBACK_SOURCE = None
 
 
-def get_pin(pin):
+def get_pin(pin_str):
     '''
     Cross-platform method to find a pin by string.
 
@@ -29,7 +33,12 @@ def get_pin(pin):
     define a module stub for `board` that uses Passthrough
     natively (which is how the MicroPython stub worked originally)
     '''
-    return getattr(PIN_SOURCE, pin)
+    pin = getattr(PIN_SOURCE, pin_str, None)
+
+    if pin is None:
+        pin = getattr(PIN_FALLBACK_SOURCE, pin_str)
+
+    return pin
 
 
 class PinLookup:
