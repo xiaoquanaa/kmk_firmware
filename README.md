@@ -37,6 +37,24 @@ ecosystem:
   thanks to Adafruit.
 
 
+## Installation/Building/Flashing
+
+The recommended way to build KMK is through Docker, which exists for Linux,
+MacOS, and Windows and creates containers (a vast oversimplification that works
+for our purposes is to think of these as lightweight virtual machines), which
+work as a "sandbox" that comes with all of the KMK build stack preinstalled,
+rather than having to hunt everything down yourself (this project has a _lot_ of
+build-time dependencies).
+
+Right now, if you have Docker installed, you should be able to flash
+auto-flashable boards  using a line like this (tested against a Linux host):
+
+```sh
+docker run --privileged -v /dev:/dev -v user_keymaps:/app/user_keymaps \
+	-it kmk/kmk_firmware:latest \
+	make USER_KEYMAP=user_keymaps/klardotsh/threethree_matrix_pyboard.py flash-pyboard
+```
+
 ## Supported Devices
 
 | Board | Chipset | Python Platform | Notes |

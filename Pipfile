@@ -5,9 +5,10 @@ name = "pypi"
 
 [packages]
 pydux = "*"
+adafruit-ampy = "*"
+pyusb = "*"
 
 [dev-packages]
-adafruit-ampy = "*"
 "flake8" = "*"
 "flake8-comprehensions" = "*"
 ipython = "*"

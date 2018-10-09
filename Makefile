@@ -8,11 +8,33 @@
 	freeze-nrf-build-deps \
 	lint
 
+DOCKER_BASE_TAG ?= latest
+DOCKER_TAG ?= latest
+
 AMPY_PORT ?= /dev/ttyUSB0
 AMPY_BAUD ?= 115200
 AMPY_DELAY ?= 1.5
 ARDUINO ?= /usr/share/arduino
 PIPENV ?= $(shell which pipenv)
+
+.docker_base: Dockerfile_base
+	@echo "===> Building Docker base image kmkfw/base:${DOCKER_BASE_TAG}"
+	@docker build -f Dockerfile_base -t kmkfw/base:${DOCKER_BASE_TAG} .
+	@touch .docker_base
+
+docker-base: .docker_base
+
+docker-base-deploy: docker-base
+	@echo "===> Pushing Docker base image kmkfw/base:${DOCKER_BASE_TAG} to Docker Hub"
+	@docker push kmkfw/base:${DOCKER_BASE_TAG}
+
+docker-image:
+	@echo "===> Building Docker image kmkfw/kmk_firmware:${DOCKER_TAG}"
+	@docker build -t kmk/kmk_firmware:${DOCKER_TAG} .
+
+docker-image-deploy: docker-image
+	@echo "===> Pushing Docker base image kmkfw/base:${DOCKER_TAG} to Docker Hub"
+	@docker push kmkfw/kmk_firmware:${DOCKER_TAG}
 
 .devdeps: Pipfile.lock
 	@echo "===> Installing dependencies with pipenv"
