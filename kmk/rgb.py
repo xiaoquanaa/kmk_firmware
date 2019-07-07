@@ -75,6 +75,7 @@ class RGB:
 
         except ImportError as e:
             print(e)
+            return None
 
     def __repr__(self):
         return 'RGB({})'.format(self._to_dict())

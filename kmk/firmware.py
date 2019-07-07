@@ -83,12 +83,14 @@ class Firmware:
     uart_pin = None
 
     # RGB config
+    pixels = None
     rgb_pixel_pin = None
     rgb_config = rgb.rgb_config
 
     # led config (mono color)
+    led = None
     led_pin = None
-    led_config = led.led_config
+    led_config = None #led.led_config
 
     def __init__(self):
         # Attempt to sanely guess a coord_mapping if one is not provided
@@ -212,13 +214,13 @@ class Firmware:
         if self.uart_pin is not None:
             self.uart = self.init_uart(self.uart_pin)
 
-        if self.rgb_pixel_pin:
+        if self.rgb_pixel_pin and self.rgb_config:
             self.pixels = rgb.RGB(self.rgb_config, self.rgb_pixel_pin)
             self.rgb_config = None  # No longer needed
         else:
             self.pixels = None
 
-        if self.led_pin:
+        if self.led_pin and self.led_config:
             self.led = led.led(self.led_pin, self.led_config)
             self.led_config = None  # No longer needed
         else:
@@ -279,7 +281,7 @@ class Firmware:
             if self.debug_enabled and state_changed:
                 print('New State: {}'.format(self._state._to_dict()))
 
-            if self.debug_enabled and state_changed and self.pixels.enabled:
+            if self.debug_enabled and state_changed and self.pixels and self.pixels.enabled:
                 print('New State: {}'.format(self.pixels))
 
             if self.pixels:

@@ -9,6 +9,8 @@ keyboard = Firmware()
 keyboard.debug_enabled = True
 keyboard.unicode_mode = UnicodeMode.LINUX
 keyboard.tap_time = 750
+keyboard.rgb_pixel_pin = None
+keyboard.led_pin = None
 
 emoticons = cuss({
     # Emojis
@@ -41,12 +43,9 @@ emoticons = cuss({
     'TABLE_FLIP': r'(╯°□°）╯︵ ┻━┻',
 })
 
-WPM = send_string("Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Bibendum arcu vitae elementum curabitur vitae nunc sed. Facilisis sed odio morbi quis.")
-
 keyboard.leader_mode = LeaderMode.ENTER
 keyboard.leader_dictionary = {
     'hello': send_string('hello world from kmk macros'),
-    'wpm': WPM,
     'atf': emoticons.ANGRY_TABLE_FLIP,
     'tf': emoticons.TABLE_FLIP,
     'fca': emoticons.FLAG_CA,

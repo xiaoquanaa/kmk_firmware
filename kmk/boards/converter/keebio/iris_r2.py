@@ -20,7 +20,7 @@ class Firmware(_Firmware):
     uart_pin = board.SCL
     extra_data_pin = board.SDA
     rgb_pixel_pin = board.TX
-    led_pin = board.D7
+    #led_pin = board.D7
 
     coord_mapping = []
     coord_mapping.extend(ic(0, x) for x in range(12))
