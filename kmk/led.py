@@ -162,41 +162,35 @@ class LED(Extension):
 
         return self
 
-    @staticmethod
-    def _key_led_tog(key, state, *args, **kwargs):
-        if state.led.animation_mode == AnimationModes.STATIC_STANDBY:
-            state.led.animation_mode = AnimationModes.STATIC
-        state.led.enabled = not state.led.enabled
+    def _key_led_tog(self, key, state, *args, **kwargs):
+        if self.animation_mode == AnimationModes.STATIC_STANDBY:
+            self.animation_mode = AnimationModes.STATIC
+
+        self._enabled = not self._enabled
         return state
 
-    @staticmethod
-    def _key_led_inc(key, state, *args, **kwargs):
-        state.led.increase_brightness()
+    def _key_led_inc(self, key, state, *args, **kwargs):
+        self.increase_brightness()
         return state
 
-    @staticmethod
-    def _key_led_dec(key, state, *args, **kwargs):
-        state.led.decrease_brightness()
+    def _key_led_dec(self, key, state, *args, **kwargs):
+        self.decrease_brightness()
         return state
 
-    @staticmethod
-    def _key_led_ani(key, state, *args, **kwargs):
-        state.led.increase_ani()
+    def _key_led_ani(self, key, state, *args, **kwargs):
+        self.increase_ani()
         return state
 
-    @staticmethod
-    def _key_led_and(key, state, *args, **kwargs):
-        state.led.decrease_ani()
+    def _key_led_and(self, key, state, *args, **kwargs):
+        self.decrease_ani()
         return state
 
-    @staticmethod
-    def _key_led_mode_static(key, state, *args, **kwargs):
-        state.led.effect_init = True
-        state.led.animation_mode = AnimationModes.STATIC
+    def _key_led_mode_static(self, key, state, *args, **kwargs):
+        self._effect_init = True
+        self.animation_mode = AnimationModes.STATIC
         return state
 
-    @staticmethod
-    def _key_led_mode_breathe(key, state, *args, **kwargs):
-        state.led.effect_init = True
-        state.led.animation_mode = AnimationModes.BREATHING
+    def _key_led_mode_breathe(self, key, state, *args, **kwargs):
+        self._effect_init = True
+        self.animation_mode = AnimationModes.BREATHING
         return state
