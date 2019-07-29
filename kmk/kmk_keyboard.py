@@ -6,7 +6,7 @@ import kmk.preload_imports  # isort:skip # NOQA
 import busio
 import gc
 
-from kmk import led, rgb
+from kmk import rgb
 from kmk.consts import KMK_RELEASE, LeaderMode, UnicodeMode
 from kmk.hid import BLEHID, USBHID, AbstractHID, HIDModes
 from kmk.keys import KC
@@ -51,10 +51,6 @@ class KMKKeyboard:
     # RGB config
     rgb_pixel_pin = None
     rgb_config = rgb.rgb_config
-
-    # led config (mono color)
-    led_pin = None
-    led_config = led.led_config
 
     #####
     # Internal State
@@ -550,15 +546,6 @@ class KMKKeyboard:
 
         return self
 
-    def _init_led(self):
-        if self.led_pin:
-            self.led = led.LED(self.led_pin, self.led_config)
-            self.led_config = None  # No longer needed
-        else:
-            self.led = None
-
-        return self
-
     def _init_matrix(self):
         self.matrix = MatrixScanner(
             cols=self.col_pins,
@@ -611,7 +598,6 @@ class KMKKeyboard:
 
         self._init_splits()
         self._init_rgb()
-        self._init_led()
         self._init_matrix()
         self._init_leader()
 
