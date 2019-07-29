@@ -3,6 +3,8 @@ import time
 from math import e, exp, pi, sin
 from micropython import const
 
+from kmk.extensions import Extension
+
 led_config = {
     'brightness_step': 5,
     'brightness_limit': 100,
@@ -12,7 +14,7 @@ led_config = {
 }
 
 
-class led:
+class LED(Extension):
     brightness = 0
     time = int(time.monotonic() * 1000)
     pos = 0
@@ -54,6 +56,12 @@ class led:
         self.pos = 0
         self.effect_init = False
         return self
+
+    def after_hid_send(self, keyboard):
+        if self.enabled and self.animation_mode:
+            self.animate()
+
+        return keyboard
 
     def time_ms(self):
         return int(time.monotonic() * 1000)

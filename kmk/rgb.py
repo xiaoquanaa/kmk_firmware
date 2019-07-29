@@ -2,6 +2,8 @@ import time
 from math import e, exp, pi, sin
 from micropython import const
 
+from kmk.extensions import Extension
+
 rgb_config = {
     'pixels': None,
     'num_pixels': 0,
@@ -21,7 +23,7 @@ rgb_config = {
 }
 
 
-class RGB:
+class RGB(Extension):
     hue = 0
     sat = 100
     val = 80
@@ -94,6 +96,18 @@ class RGB:
             'neopixel': self.neopixel,
             'disable_auto_write': self.disable_auto_write,
         }
+
+    def during_bootup(self, keyboard):
+        pass
+
+    def after_hid_send(self, keyboard):
+        if self.animation_mode:
+            self.loopcounter += 1
+            if self.loopcounter >= 7:
+                self.animate()
+                self.loopcounter = 0
+
+        return keyboard
 
     def time_ms(self):
         return int(time.monotonic() * 1000)
