@@ -89,14 +89,11 @@ class Leader(Extension):
                 False, lambda: self._remove_key(self._sequences[lmh])
             )
 
-        return self
-
     def _exit_leader_mode(self, keyboard_state):
         self._sequence_assembly.clear()
         self._mode -= 1
         self._assembly_last_len = 0
         keyboard_state._keys_pressed.clear()
-        return self
 
     def _key_leader_pressed(self, key, keyboard_state, *args, **kwargs):
         if self._mode % 2 == 0:
