@@ -122,10 +122,6 @@ def uc_mode_pressed(key, state, *args, **kwargs):
     return state
 
 
-def leader_pressed(key, state, *args, **kwargs):
-    return state._begin_leader_mode()
-
-
 def td_pressed(key, state, *args, **kwargs):
     return state._process_tap_dance(key, True)
 

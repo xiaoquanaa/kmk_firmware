@@ -7,7 +7,7 @@ import busio
 import gc
 
 from kmk import rgb
-from kmk.consts import KMK_RELEASE, LeaderMode, UnicodeMode
+from kmk.consts import KMK_RELEASE, UnicodeMode
 from kmk.hid import BLEHID, USBHID, AbstractHID, HIDModes
 from kmk.keys import KC
 from kmk.kmktime import sleep_ms, ticks_ms
@@ -31,9 +31,6 @@ class KMKKeyboard:
 
     unicode_mode = UnicodeMode.NOOP
     tap_time = 300
-    leader_mode = LeaderMode.TIMEOUT
-    leader_dictionary = {}
-    leader_timeout = 1000
 
     # Split config
     extra_data_pin = None
@@ -56,17 +53,14 @@ class KMKKeyboard:
     # Internal State
     _keys_pressed = set()
     _coord_keys_pressed = {}
-    _leader_pending = None
-    _leader_last_len = 0
     _hid_pending = False
-    _leader_mode_history = []
 
     # this should almost always be PREpended to, replaces
     # former use of reversed_active_layers which had pointless
     # overhead (the underlying list was never used anyway)
     _active_layers = [0]
 
-    _start_time = {'lt': None, 'tg': None, 'tt': None, 'lm': None, 'leader': None}
+    _start_time = {'lt': None, 'tg': None, 'tt': None, 'lm': None}
     _timeouts = {}
     _tapping = False
     _tap_dance_counts = {}
@@ -84,9 +78,6 @@ class KMKKeyboard:
             'matrix_scanner={} '
             'unicode_mode={} '
             'tap_time={} '
-            'leader_mode={} '
-            'leader_dictionary=truncated '
-            'leader_timeout={} '
             'hid_helper={} '
             'extra_data_pin={} '
             'split_offsets={} '
@@ -100,10 +91,7 @@ class KMKKeyboard:
             'uart_pin={} '
             'keys_pressed={} '
             'coord_keys_pressed={} '
-            'leader_pending={} '
-            'leader_last_len={} '
             'hid_pending={} '
-            'leader_mode_history={} '
             'active_layers={} '
             'start_time={} '
             'timeouts={} '
@@ -121,9 +109,6 @@ class KMKKeyboard:
             self.matrix_scanner,
             self.unicode_mode,
             self.tap_time,
-            self.leader_mode,
-            # self.leader_dictionary,
-            self.leader_timeout,
             self.hid_helper.__name__,
             self.extra_data_pin,
             self.split_offsets,
@@ -138,10 +123,7 @@ class KMKKeyboard:
             # internal state
             self._keys_pressed,
             self._coord_keys_pressed,
-            self._leader_pending,
-            self._leader_last_len,
             self._hid_pending,
-            self._leader_mode_history,
             self._active_layers,
             self._start_time,
             self._timeouts,
@@ -269,9 +251,6 @@ class KMKKeyboard:
             else:
                 key._on_release(self, coord_int, coord_raw)
 
-            if self.leader_mode % 2 == 1:
-                self._process_leader_mode()
-
         return self
 
     def _remove_key(self, keycode):
@@ -350,68 +329,6 @@ class KMKKeyboard:
     def _cleanup_tap_dance(self, td_key):
         self._tap_dance_counts[td_key] = 0
         self._tapping = any(count > 0 for count in self._tap_dance_counts.values())
-        return self
-
-    def _begin_leader_mode(self):
-        if self.leader_mode % 2 == 0:
-            self._keys_pressed.discard(KC.LEAD)
-            # All leader modes are one number higher when activating
-            self.leader_mode += 1
-
-            if self.leader_mode == LeaderMode.TIMEOUT_ACTIVE:
-                self._set_timeout(self.leader_timeout, self._handle_leader_sequence)
-
-        return self
-
-    def _handle_leader_sequence(self):
-        lmh = tuple(self._leader_mode_history)
-        # Will get caught in infinite processing loops if we don't
-        # exit leader mode before processing the target key
-        self._exit_leader_mode()
-
-        if lmh in self.leader_dictionary:
-            # Stack depth exceeded if try to use add_key here with a unicode sequence
-            self._process_key(self.leader_dictionary[lmh], True)
-
-            self._set_timeout(
-                False, lambda: self._remove_key(self.leader_dictionary[lmh])
-            )
-
-        return self
-
-    def _process_leader_mode(self):
-        keys_pressed = self._keys_pressed
-
-        if self._leader_last_len and self._leader_mode_history:
-            history_set = set(self._leader_mode_history)
-
-            keys_pressed = keys_pressed - history_set
-
-        self._leader_last_len = len(self._keys_pressed)
-
-        for key in keys_pressed:
-            if self.leader_mode == LeaderMode.ENTER_ACTIVE and key == KC.ENT:
-                self._handle_leader_sequence()
-                break
-            elif key == KC.ESC or key == KC.GESC:
-                # Clean self and turn leader mode off.
-                self._exit_leader_mode()
-                break
-            elif key == KC.LEAD:
-                break
-            else:
-                # Add key if not needing to escape
-                # This needs replaced later with a proper debounce
-                self._leader_mode_history.append(key)
-
-        self._hid_pending = False
-        return self
-
-    def _exit_leader_mode(self):
-        self._leader_mode_history.clear()
-        self.leader_mode -= 1
-        self._leader_last_len = 0
-        self._keys_pressed.clear()
         return self
 
     def _set_timeout(self, after_ticks, callback):
@@ -556,23 +473,6 @@ class KMKKeyboard:
 
         return self
 
-    def _init_leader(self):
-        '''
-        Compile string leader sequences
-        '''
-        for k, v in self.leader_dictionary.items():
-            if not isinstance(k, tuple):
-                new_key = tuple(KC[c] for c in k)
-                self.leader_dictionary[new_key] = v
-
-        for k, v in self.leader_dictionary.items():
-            if not isinstance(k, tuple):
-                del self.leader_dictionary[k]
-
-        gc.collect()
-
-        return self
-
     def go(self, hid_type=HIDModes.USB):
         self._extensions = [] + getattr(self, 'extensions', [])
 
@@ -599,7 +499,6 @@ class KMKKeyboard:
         self._init_splits()
         self._init_rgb()
         self._init_matrix()
-        self._init_leader()
 
         self._print_debug_cycle(init=True)
 
@@ -628,6 +527,12 @@ class KMKKeyboard:
                 else:
                     # This keyboard is a slave, and needs to send data to master
                     self._send_to_master(update)
+
+            for ext in self._extensions:
+                try:
+                    ext.after_matrix_scan(self)
+                except Exception as e:
+                    print(e)
 
             for ext in self._extensions:
                 try:

@@ -633,13 +633,6 @@ make_key(
 make_key(names=('RGB_MODE_SWIRL', 'RGB_M_S'), on_press=handlers.rgb_mode_swirl)
 make_key(names=('RGB_MODE_KNIGHT', 'RGB_M_K'), on_press=handlers.rgb_mode_knight)
 
-
-make_key(
-    names=('LEADER', 'LEAD'),
-    on_press=handlers.leader_pressed,
-    on_release=handlers.passthrough,
-)
-
 # Layers
 make_argumented_key(
     validator=layer_key_validator,
