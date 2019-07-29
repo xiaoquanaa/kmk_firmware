@@ -2,7 +2,7 @@ import time
 from math import e, exp, pi, sin
 from micropython import const
 
-from kmk.extensions import Extension
+from kmk.extensions import Extension, InvalidExtensionEnvironment
 
 rgb_config = {
     'pixels': None,
@@ -52,50 +52,41 @@ class RGB(Extension):
     def __init__(self, config, pixel_pin):
         try:
             import neopixel
-
-            self.neopixel = neopixel.NeoPixel(
-                pixel_pin,
-                config['num_pixels'],
-                pixel_order=config['rgb_order'],
-                auto_write=False,
+        except ImportError:
+            raise InvalidExtensionEnvironment(
+                'Adafruit neopixel library is required to use RGB support'
             )
-            if len(config['rgb_order']) == 4:
-                self.rgbw = True
-            self.num_pixels = const(config['num_pixels'])
-            self.hue_step = const(config['hue_step'])
-            self.sat_step = const(config['sat_step'])
-            self.val_step = const(config['val_step'])
-            self.hue = const(config['hue_default'])
-            self.sat = const(config['sat_default'])
-            self.val = const(config['val_default'])
-            self.breathe_center = const(config['breathe_center'])
-            self.knight_effect_length = const(config['knight_effect_length'])
-            self.val_limit = const(config['val_limit'])
-            self.animation_mode = config['animation_mode']
-            self.animation_speed = const(config['animation_speed'])
-            if 'user_animation' in config:
-                print(config['user_animation'])
-                self.user_animation = config['user_animation']
 
-        except ImportError as e:
-            print(e)
+        self.neopixel = neopixel.NeoPixel(
+            pixel_pin,
+            config['num_pixels'],
+            pixel_order=config['rgb_order'],
+            auto_write=False,
+        )
+        if len(config['rgb_order']) == 4:
+            self.rgbw = True
+        self.num_pixels = const(config['num_pixels'])
+        self.hue_step = const(config['hue_step'])
+        self.sat_step = const(config['sat_step'])
+        self.val_step = const(config['val_step'])
+        self.hue = const(config['hue_default'])
+        self.sat = const(config['sat_default'])
+        self.val = const(config['val_default'])
+        self.breathe_center = const(config['breathe_center'])
+        self.knight_effect_length = const(config['knight_effect_length'])
+        self.val_limit = const(config['val_limit'])
+        self.animation_mode = config['animation_mode']
+        self.animation_speed = const(config['animation_speed'])
+        if 'user_animation' in config:
+            print(config['user_animation'])
+            self.user_animation = config['user_animation']
 
     def __repr__(self):
         return 'RGB({})'.format(self._to_dict())
 
     def _to_dict(self):
-        return {
-            'hue': self.hue,
-            'sat': self.sat,
-            'val': self.val,
-            'time': self.time,
-            'intervals': self.intervals,
-            'animation_mode': self.animation_mode,
-            'animation_speed': self.animation_speed,
-            'enabled': self.enabled,
-            'neopixel': self.neopixel,
-            'disable_auto_write': self.disable_auto_write,
-        }
+        # TODO FIXME remove
+        pass
 
     def during_bootup(self, keyboard):
         pass
