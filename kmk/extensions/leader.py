@@ -33,7 +33,7 @@ class Leader(Extension):
             on_release=handler_passthrough,
         )
 
-    def after_matrix_scan(self, keyboard_state):
+    def after_matrix_scan(self, keyboard_state, *args):
         if self._mode % 2 == 1:
             keys_pressed = keyboard_state._keys_pressed
 
@@ -86,7 +86,7 @@ class Leader(Extension):
             keyboard_state._process_key(self._sequences[lmh], True)
 
             keyboard_state._set_timeout(
-                False, lambda: self._remove_key(self._sequences[lmh])
+                False, lambda: keyboard_state._remove_key(self._sequences[lmh])
             )
 
     def _exit_leader_mode(self, keyboard_state):
