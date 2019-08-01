@@ -32,19 +32,6 @@ class KMKKeyboard:
     unicode_mode = UnicodeMode.NOOP
     tap_time = 300
 
-    # Split config
-    extra_data_pin = None
-    split_offsets = ()
-    split_flip = False
-    split_side = None
-    split_type = None
-    split_master_left = True
-    is_master = None
-    _uart = None
-    uart_flip = True
-    uart_pin = None
-    uart_timeout = 20
-
     # RGB config
     rgb_pixel_pin = None
     rgb_config = rgb.rgb_config
@@ -79,16 +66,6 @@ class KMKKeyboard:
             'unicode_mode={} '
             'tap_time={} '
             'hid_helper={} '
-            'extra_data_pin={} '
-            'split_offsets={} '
-            'split_flip={} '
-            'split_side={} '
-            'split_type={} '
-            'split_master_left={} '
-            'is_master={} '
-            'uart={} '
-            'uart_flip={} '
-            'uart_pin={} '
             'keys_pressed={} '
             'coord_keys_pressed={} '
             'hid_pending={} '
@@ -110,16 +87,6 @@ class KMKKeyboard:
             self.unicode_mode,
             self.tap_time,
             self.hid_helper.__name__,
-            self.extra_data_pin,
-            self.split_offsets,
-            self.split_flip,
-            self.split_side,
-            self.split_type,
-            self.split_master_left,
-            self.is_master,
-            self._uart,
-            self.uart_flip,
-            self.uart_pin,
             # internal state
             self._keys_pressed,
             self._coord_keys_pressed,
@@ -153,21 +120,9 @@ class KMKKeyboard:
         self._hid_pending = False
 
     def _handle_matrix_report(self, update=None):
-        '''
-        Bulk processing of update code for each cycle
-        :param update:
-        '''
         if update is not None:
-
             self._on_matrix_changed(update[0], update[1], update[2])
-
-    def _send_to_master(self, update):
-        if self.split_master_left:
-            update[1] += self.split_offsets[update[0]]
-        else:
-            update[1] -= self.split_offsets[update[0]]
-        if self._uart is not None:
-            self._uart.write(update)
+            self.state_changed = True
 
     def _receive_from_slave(self):
         if self._uart is not None and self._uart.in_waiting > 0 or self.uart_buffer:
@@ -496,41 +451,26 @@ class KMKKeyboard:
                 # TODO FIXME log the exceptions or something
                 pass
 
-        self._init_splits()
         self._init_rgb()
         self._init_matrix()
 
         self._print_debug_cycle(init=True)
 
         while True:
-            state_changed = False
-
-            if self.split_type is not None and self.is_master:
-                update = self._receive_from_slave()
-                if update is not None:
-                    self._handle_matrix_report(update)
-                    state_changed = True
+            self.state_changed = False
 
             for ext in self._extensions:
                 try:
-                    ext.before_matrix_scan(self)
-                except Exception:
-                    # TODO FIXME log the exceptions or something
-                    pass
+                    self._handle_matrix_report(ext.before_matrix_scan(self))
+                except Exception as e:
+                    print(e)
 
-            update = self.matrix.scan_for_changes()
-
-            if update is not None:
-                if self.is_master:
-                    self._handle_matrix_report(update)
-                    state_changed = True
-                else:
-                    # This keyboard is a slave, and needs to send data to master
-                    self._send_to_master(update)
+            matrix_update = self.matrix.scan_for_changes()
+            self._handle_matrix_report(matrix_update)
 
             for ext in self._extensions:
                 try:
-                    ext.after_matrix_scan(self)
+                    ext.after_matrix_scan(self, matrix_update)
                 except Exception as e:
                     print(e)
 
@@ -549,7 +489,7 @@ class KMKKeyboard:
             new_timeouts_len = len(self._timeouts)
 
             if old_timeouts_len != new_timeouts_len:
-                state_changed = True
+                self.state_changed = True
 
                 if self._hid_pending:
                     self._send_hid()
@@ -561,5 +501,5 @@ class KMKKeyboard:
                     # TODO FIXME log the exceptions or something
                     pass
 
-            if state_changed:
+            if self.state_changed:
                 self._print_debug_cycle()

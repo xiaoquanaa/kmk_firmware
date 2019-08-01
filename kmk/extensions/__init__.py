@@ -27,9 +27,12 @@ class Extension:
         pass
 
     def before_matrix_scan(self, keyboard):
+        '''
+        Return value will be injected as an extra matrix update
+        '''
         pass
 
-    def after_matrix_scan(self, keyboard):
+    def after_matrix_scan(self, keyboard, matrix_update):
         pass
 
     def before_hid_send(self, keyboard):
