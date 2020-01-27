@@ -33,6 +33,8 @@ class Leader(Extension):
             on_release=handler_passthrough,
         )
 
+        gc.collect()
+
     def after_matrix_scan(self, keyboard_state, *args):
         if self._mode % 2 == 1:
             keys_pressed = keyboard_state._keys_pressed
@@ -62,6 +64,8 @@ class Leader(Extension):
             keyboard_state._hid_pending = False
 
     def _compile_sequences(self, sequences):
+        gc.collect()
+
         for k, v in sequences.items():
             if not isinstance(k, tuple):
                 new_key = tuple(KC[c] for c in k)

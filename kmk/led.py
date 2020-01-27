@@ -14,7 +14,6 @@ class AnimationModes:
 
 
 class LED(Extension):
-    # led_pin, config):
     def __init__(
         self,
         led_pin,

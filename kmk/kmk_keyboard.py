@@ -3,14 +3,13 @@
 # a line into their keymaps.
 import kmk.preload_imports  # isort:skip # NOQA
 
-import busio
 import gc
 
 from kmk import rgb
 from kmk.consts import KMK_RELEASE, UnicodeMode
 from kmk.hid import BLEHID, USBHID, AbstractHID, HIDModes
 from kmk.keys import KC
-from kmk.kmktime import sleep_ms, ticks_ms
+from kmk.kmktime import ticks_ms
 from kmk.matrix import MatrixScanner, intify_coordinate
 from kmk.types import TapDanceKeyMeta
 
@@ -341,23 +340,27 @@ class KMKKeyboard:
 
     def _init_coord_mapping(self):
         '''
-        Attempt to sanely guess a coord_mapping if one is not provided
+        Attempt to sanely guess a coord_mapping if one is not provided. No-op
+        if `kmk.extensions.split.Split` is used, it provides equivalent
+        functionality in `on_bootup`
+
+        To save RAM on boards that don't use Split, we don't import Split
+        and do an isinstance check, but instead do string detection
         '''
+        if any(
+            x.__class__.__module__ == 'kmk.extensions.split' for x in self._extensions
+        ):
+            return
+
         if not self.coord_mapping:
             self.coord_mapping = []
 
             rows_to_calc = len(self.row_pins)
             cols_to_calc = len(self.col_pins)
 
-            if self.split_offsets:
-                rows_to_calc *= 2
-                cols_to_calc *= 2
-
             for ridx in range(rows_to_calc):
                 for cidx in range(cols_to_calc):
                     self.coord_mapping.append(intify_coordinate(ridx, cidx))
-
-        return self
 
     def _init_hid(self):
         if self.hid_type == HIDModes.NOOP:
@@ -368,55 +371,6 @@ class KMKKeyboard:
             self.hid_helper = BLEHID
 
         self._hid_helper_inst = self.hid_helper()
-
-        return self
-
-    def _init_splits(self):
-        # Split keyboard Init
-        if self.split_type is not None:
-            try:
-                # Working around https://github.com/adafruit/circuitpython/issues/1769
-                self._hid_helper_inst.create_report([]).send()
-                self.is_master = True
-
-                # Sleep 2s so master portion doesn't "appear" to boot quicker than
-                # dependent portions (which will take ~2s to time out on the HID send)
-                sleep_ms(2000)
-            except OSError:
-                self.is_master = False
-
-            if self.split_flip and not self.is_master:
-                self.col_pins = list(reversed(self.col_pins))
-            if self.split_side == 'Left':
-                self.split_master_left = self.is_master
-            elif self.split_side == 'Right':
-                self.split_master_left = not self.is_master
-        else:
-            self.is_master = True
-
-        if self.uart_pin is not None:
-            if self.is_master:
-                self._uart = busio.UART(
-                    tx=None, rx=self.uart_pin, timeout=self.uart_timeout
-                )
-            else:
-                self._uart = busio.UART(
-                    tx=self.uart_pin, rx=None, timeout=self.uart_timeout
-                )
-
-        gc.collect()
-
-        return self
-
-    def _init_rgb(self):
-        if self.rgb_pixel_pin:
-            self.pixels = rgb.RGB(self.rgb_config, self.rgb_pixel_pin)
-            self.rgb_config = None  # No longer needed
-            self.pixels.loopcounter = 0
-        else:
-            self.pixels = None
-
-        return self
 
     def _init_matrix(self):
         self.matrix = MatrixScanner(
@@ -451,7 +405,6 @@ class KMKKeyboard:
                 # TODO FIXME log the exceptions or something
                 pass
 
-        self._init_rgb()
         self._init_matrix()
 
         self._print_debug_cycle(init=True)

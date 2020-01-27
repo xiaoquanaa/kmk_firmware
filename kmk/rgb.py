@@ -1,92 +1,71 @@
+import neopixel
 import time
 from math import e, exp, pi, sin
-from micropython import const
 
-from kmk.extensions import Extension, InvalidExtensionEnvironment
+from kmk.extensions import Extension
 
-rgb_config = {
-    'pixels': None,
-    'num_pixels': 0,
-    'pixel_pin': None,
-    'val_limit': 255,
-    'hue_default': 0,
-    'sat_default': 100,
-    'rgb_order': (1, 0, 2),  # GRB WS2812
-    'val_default': 100,
-    'hue_step': 1,
-    'sat_step': 1,
-    'val_step': 1,
-    'animation_speed': 1,
-    'breathe_center': 1.5,  # 1.0-2.7
-    'knight_effect_length': 3,
-    'animation_mode': 'static',
-}
+rgb_config = {}
+
+
+class AnimationModes:
+    OFF = 0
+    STATIC = 1
+    STATIC_STANDBY = 2
+    BREATHING = 3
+    USER = 4
 
 
 class RGB(Extension):
-    hue = 0
-    sat = 100
-    val = 80
     pos = 0
     time = int(time.monotonic() * 10)
     intervals = (30, 20, 10, 5)
-    animation_speed = 1
-    enabled = True
-    neopixel = None
-    rgbw = False
-    reverse_animation = False
-    disable_auto_write = False
-    animation_mode = 'static'
 
-    # Set by config
-    num_pixels = None
-    hue_step = None
-    sat_step = None
-    val_step = None
-    breathe_center = None  # 1.0-2.7
-    knight_effect_length = None
-    val_limit = None
-    effect_init = False
-    user_animation = None
-
-    def __init__(self, config, pixel_pin):
-        try:
-            import neopixel
-        except ImportError:
-            raise InvalidExtensionEnvironment(
-                'Adafruit neopixel library is required to use RGB support'
-            )
-
+    def __init__(
+        self,
+        pixel_pin,
+        num_pixels=0,
+        val_limit=255,
+        hue_default=0,
+        sat_default=100,
+        rgb_order=(1, 0, 2),  # GRB WS2812
+        val_default=100,
+        hue_step=1,
+        sat_step=1,
+        val_step=1,
+        animation_speed=1,
+        breathe_center=1.5,  # 1.0-2.7
+        knight_effect_length=3,
+        animation_mode=AnimationModes.STATIC,
+        effect_init=False,
+        reverse_animation=False,
+        user_animation=None,
+        disable_auto_write=False,
+    ):
         self.neopixel = neopixel.NeoPixel(
             pixel_pin,
-            config['num_pixels'],
-            pixel_order=config['rgb_order'],
-            auto_write=False,
+            num_pixels,
+            pixel_order=rgb_order,
+            auto_write=not disable_auto_write,
         )
-        if len(config['rgb_order']) == 4:
+
+        if len(rgb_order) == 4:
             self.rgbw = True
-        self.num_pixels = const(config['num_pixels'])
-        self.hue_step = const(config['hue_step'])
-        self.sat_step = const(config['sat_step'])
-        self.val_step = const(config['val_step'])
-        self.hue = const(config['hue_default'])
-        self.sat = const(config['sat_default'])
-        self.val = const(config['val_default'])
-        self.breathe_center = const(config['breathe_center'])
-        self.knight_effect_length = const(config['knight_effect_length'])
-        self.val_limit = const(config['val_limit'])
-        self.animation_mode = config['animation_mode']
-        self.animation_speed = const(config['animation_speed'])
-        if 'user_animation' in config:
-            print(config['user_animation'])
-            self.user_animation = config['user_animation']
 
-    def __repr__(self):
-        return 'RGB({})'.format(self._to_dict())
-
-    def _to_dict(self):
-        # TODO FIXME remove
-        pass
+        self.num_pixels = num_pixels
+        self.hue_step = hue_step
+        self.sat_step = sat_step
+        self.val_step = val_step
+        self.hue = hue_default
+        self.sat = sat_default
+        self.val = val_default
+        self.breathe_center = breathe_center
+        self.knight_effect_length = knight_effect_length
+        self.val_limit = val_limit
+        self.animation_mode = animation_mode
+        self.animation_speed = animation_speed
+        self.reverse_animation = reverse_animation
+        self.user_animation = user_animation
+        self.disable_auto_write = disable_auto_write
 
     def during_bootup(self, keyboard):
         pass
